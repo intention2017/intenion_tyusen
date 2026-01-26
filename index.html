@@ -4,17 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>特別アンケート抽選会</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root {
             --primary-color: #e10012;
-            --gold-color: #f1c40f;
+            --gold-gradient: linear-gradient(135deg, #f1c40f, #d4ac0d, #f1c40f);
             --stand-color: #5d4037;
             --bg-color: #f8f9fa;
         }
 
-        /* 全体レイアウト */
         body {
-            font-family: "Helvetica Neue", Arial, sans-serif;
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", sans-serif;
             background-color: var(--bg-color);
             margin: 0;
             display: flex;
@@ -22,7 +22,6 @@
             align-items: center;
             height: 100vh;
             overflow: hidden;
-            /* スマホでのタップ時のハイライト色を無効化（CSSで制御するため） */
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -55,7 +54,6 @@
 
         .btn-container { display: flex; flex-direction: column; gap: 15px; }
 
-        /* --- ボタンの共通スタイル --- */
         button {
             padding: 16px;
             font-size: 1.1rem;
@@ -63,31 +61,15 @@
             border: none;
             border-radius: 50px;
             cursor: pointer;
-            transition: background-color 0.1s, transform 0.1s; /* 色と大きさを滑らかに変える */
+            transition: 0.1s;
             outline: none;
         }
 
-        /* --- 「はい」ボタンのスタイル --- */
-        .btn-yes {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        /* ★タップした時の色（濃い赤） */
-        .btn-yes:active {
-            background-color: #a0000d; 
-            transform: scale(0.96); /* 少し縮む */
-        }
+        .btn-yes { background-color: var(--primary-color); color: white; }
+        .btn-yes:active { background-color: #a0000d; transform: scale(0.96); }
 
-        /* --- 「いいえ」ボタンのスタイル --- */
-        .btn-no {
-            background-color: #eee;
-            color: #333;
-        }
-        /* ★タップした時の色（濃いグレー） */
-        .btn-no:active {
-            background-color: #bbb;
-            transform: scale(0.96); /* 少し縮む */
-        }
+        .btn-no { background-color: #eee; color: #333; }
+        .btn-no:active { background-color: #bbb; transform: scale(0.96); }
 
         /* 抽選機エリア */
         #lottery-section {
@@ -99,136 +81,85 @@
             align-items: center;
         }
         #lottery-section.active { display: flex; animation: fadeIn 0.5s; }
+
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- ガラガラ抽選機の構造 --- */
-        .machine-box {
-            position: relative;
-            width: 240px;
-            height: 300px;
-            margin: 0 auto;
-            cursor: pointer;
-        }
+        /* 八角形抽選機 */
+        .machine-box { position: relative; width: 240px; height: 300px; margin: 0 auto; cursor: pointer; }
 
-        /* 1. ドラム（一番奥） */
         .drum {
-            width: 180px;
-            height: 180px;
+            width: 180px; height: 180px;
             background: linear-gradient(135deg, #f1c40f 0%, #d4ac0d 100%);
             clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
-            position: absolute;
-            left: 30px;
-            top: 20px;
-            z-index: 1;
-            border: 4px solid #b7950b;
-            box-sizing: border-box;
+            position: absolute; left: 30px; top: 20px; z-index: 1;
+            border: 4px solid #b7950b; box-sizing: border-box;
         }
         
-        .drum::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: 
-                radial-gradient(circle at 50% 50%, transparent 60%, rgba(255,255,255,0.4) 61%),
-                linear-gradient(45deg, transparent 45%, rgba(0,0,0,0.1) 50%, transparent 55%);
-        }
-
         .drum.spinning { animation: rotateOctagon 0.4s linear infinite; }
-        @keyframes rotateOctagon {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
+        @keyframes rotateOctagon { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* 2. 支柱（ドラムの手前） */
         .stand-front {
-            position: absolute;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 140px; 
-            height: 120px;
-            background-color: var(--stand-color);
-            z-index: 10;
-            clip-path: polygon(40% 0%, 60% 0%, 80% 100%, 20% 100%);
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            width: 140px; height: 120px; background-color: var(--stand-color);
+            z-index: 10; clip-path: polygon(40% 0%, 60% 0%, 80% 100%, 20% 100%);
         }
 
-        /* 3. 中心の留め具（軸） */
         .center-axis {
-            position: absolute;
-            top: 110px;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 24px;
-            height: 24px;
-            background: #8d6e63;
-            border: 4px solid #5d4037;
-            border-radius: 50%;
-            z-index: 11;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            position: absolute; top: 110px; left: 50%; transform: translate(-50%, -50%);
+            width: 24px; height: 24px; background: #8d6e63; border: 4px solid #5d4037;
+            border-radius: 50%; z-index: 11;
         }
 
-        /* 4. 底板（一番下） */
         .base-plate {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 200px;
-            height: 20px;
-            background: #4e342e;
-            border-radius: 5px;
-            z-index: 10;
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 200px; height: 20px; background: #4e342e; border-radius: 5px; z-index: 10;
         }
 
         /* 結果ポップアップ */
         #result-popup {
             display: none;
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 95%;
-            background: white;
-            border-radius: 20px;
-            padding: 30px 15px;
-            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
-            z-index: 100;
-            text-align: center;
-            box-sizing: border-box;
+            top: 55%; left: 50%; transform: translate(-50%, -50%);
+            width: 95%; background: white; border-radius: 20px;
+            padding: 50px 15px 30px 15px; box-sizing: border-box;
+            z-index: 100; text-align: center;
+            border: 5px solid transparent;
+            background-image: linear-gradient(#fff, #fff), var(--gold-gradient);
+            background-origin: border-box;
+            background-clip: content-box, border-box;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+            overflow: visible; 
         }
         #result-popup.active { display: block; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn { from { scale: 0.5; opacity: 0; } to { scale: 1; opacity: 1; } }
 
-        .gift-box {
-            font-size: 1.2rem;
-            color: var(--primary-color);
-            background: #fff0f0;
-            padding: 20px 10px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border: 2px dashed var(--primary-color);
-            font-weight: bold;
-            line-height: 1.4;
+        /* キャラクター画像 */
+        .character-img {
+            position: absolute;
+            top: -100px; 
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            width: 140px; 
+            height: auto;
+            z-index: 110;
+            transition: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+        }
+        #result-popup.active .character-img {
+            transform: translateX(-50%) scale(1);
         }
 
-        /* 終了ボタン */
-        .btn-finish {
-            background: #444; color: white; width: 100%;
+        .gift-box {
+            font-size: 1.2rem; color: var(--primary-color); background: #fff0f0;
+            padding: 20px 10px; border-radius: 10px; margin: 20px 0;
+            border: 2px dashed var(--primary-color); font-weight: bold; line-height: 1.4;
         }
-        /* 終了ボタンもタップで色を変える */
-        .btn-finish:active {
-            background: #222; transform: scale(0.96);
-        }
+
+        .btn-finish { background: #444; color: white; width: 100%; margin-top: 10px; }
+        .btn-finish:active { background: #222; transform: scale(0.96); }
 
         #finish-screen {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: white;
-            z-index: 1000;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 1000; flex-direction: column; justify-content: center; align-items: center;
         }
     </style>
 </head>
@@ -254,7 +185,6 @@
 
     <div id="lottery-section">
         <h2 id="machine-msg">抽選機をタップしてね！</h2>
-        
         <div class="machine-box" onclick="startLottery()">
             <div id="drum" class="drum"></div>
             <div class="stand-front"></div>
@@ -264,8 +194,10 @@
     </div>
 
     <div id="result-popup">
-        <h2 style="color: #e10012; font-size: 2.2rem; margin: 0 0 10px 0;">あたり！</h2>
-        <p style="font-size: 1.1rem; color: #333; margin: 0 auto 20px auto; font-weight: bold;">この画面をスタッフまでお見せ下さい。</p>
+        <img src="character.png" alt="キャラ" class="character-img" id="char-icon">
+        
+        <h2 style="color: #e10012; font-size: 2.2rem; margin: 0 0 10px 0;">当たり</h2>
+        <p style="font-size: 1.1rem; color: #333; margin: 0 auto 15px auto; font-weight: bold;">この画面をスタッフまでお見せ下さい。</p>
         <p style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">プレゼント内容：</p>
         <div id="gift-text" class="gift-box"></div>
         <button class="btn-finish" onclick="finishApp()">アンケートを終了する</button>
@@ -300,15 +232,13 @@
     function startLottery() {
         if (isSpinning) return;
         isSpinning = true;
-
         const drum = document.getElementById('drum');
         const msg = document.getElementById('machine-msg');
         const sndSpin = document.getElementById('snd-spin');
         
         drum.classList.add('spinning');
         msg.innerText = "まわっています...";
-        
-        if(sndSpin) sndSpin.play().catch(e => console.log("Audio play blocked"));
+        if(sndSpin) sndSpin.play().catch(e => {});
 
         setTimeout(() => {
             drum.classList.remove('spinning');
@@ -319,22 +249,52 @@
     function showFinalResult() {
         const popup = document.getElementById('result-popup');
         const gift = document.getElementById('gift-text');
+        const charIcon = document.getElementById('char-icon'); // 画像要素
         const sndWin = document.getElementById('snd-win');
 
         let resultHTML = "";
-        if (answers.q1 === 'yes' && answers.q2 === 'yes') {
-            resultHTML = "dポイント100pt &<br>ファイターズグッズ";
-        } else if (answers.q1 === 'yes' && answers.q2 === 'no') {
-            resultHTML = "dポイント100pt";
-        } else if (answers.q1 === 'no' && answers.q2 === 'yes') {
-            resultHTML = "湖池屋スナック &<br>ファイターズグッズ";
+        const q1 = answers.q1 === 'yes';
+        const q2 = answers.q2 === 'yes';
+
+        // 条件分岐と画像の切り替え
+        if (q1) {
+            // dポイント対象（Q1がはい）
+            charIcon.src = "poinko.png";
+            if (q2) {
+                resultHTML = "dポイント100pt &<br>ファイターズグッズ";
+            } else {
+                resultHTML = "dポイント100pt";
+            }
         } else {
-            resultHTML = "湖池屋スナック";
+            // 湖池屋対象（Q1がいいえ）
+            charIcon.src = "character.png";
+            if (q2) {
+                resultHTML = "湖池屋お菓子ハッピーセット &<br>ファイターズグッズ";
+            } else {
+                resultHTML = "湖池屋お菓子ハッピーセット";
+            }
         }
 
         gift.innerHTML = resultHTML;
         popup.classList.add('active');
-        if(sndWin) sndWin.play().catch(e => console.log("Audio play blocked"));
+        
+        fireConfetti();
+        if(sndWin) sndWin.play().catch(e => {});
+    }
+
+    function fireConfetti() {
+        var count = 200;
+        var defaults = { origin: { y: 0.7 }, zIndex: 1500 };
+        function fire(particleRatio, opts) {
+            confetti(Object.assign({}, defaults, opts, {
+                particleCount: Math.floor(count * particleRatio)
+            }));
+        }
+        fire(0.25, { spread: 26, startVelocity: 55 });
+        fire(0.2, { spread: 60 });
+        fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+        fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+        fire(0.1, { spread: 120, startVelocity: 45 });
     }
 
     function finishApp() {
