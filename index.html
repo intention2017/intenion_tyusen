@@ -82,8 +82,6 @@
         }
         #lottery-section.active { display: flex; animation: fadeIn 0.5s; }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
         /* 八角形抽選機 */
         .machine-box { position: relative; width: 240px; height: 300px; margin: 0 auto; cursor: pointer; }
 
@@ -121,7 +119,7 @@
             position: absolute;
             top: 55%; left: 50%; transform: translate(-50%, -50%);
             width: 95%; background: white; border-radius: 20px;
-            padding: 50px 15px 30px 15px; box-sizing: border-box;
+            padding: 50px 15px 25px 15px; box-sizing: border-box;
             z-index: 100; text-align: center;
             border: 5px solid transparent;
             background-image: linear-gradient(#fff, #fff), var(--gold-gradient);
@@ -150,11 +148,20 @@
 
         .gift-box {
             font-size: 1.2rem; color: var(--primary-color); background: #fff0f0;
-            padding: 20px 10px; border-radius: 10px; margin: 20px 0;
+            padding: 20px 10px; border-radius: 10px; margin: 15px 0;
             border: 2px dashed var(--primary-color); font-weight: bold; line-height: 1.4;
         }
 
-        .btn-finish { background: #444; color: white; width: 100%; margin-top: 10px; }
+        /* 追加した文言のスタイル */
+        .limited-text {
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            display: block; /* 縦並びを保証 */
+        }
+
+        .btn-finish { background: #444; color: white; width: 100%; }
         .btn-finish:active { background: #222; transform: scale(0.96); }
 
         #finish-screen {
@@ -197,9 +204,13 @@
         <img src="character.png" alt="キャラ" class="character-img" id="char-icon">
         
         <h2 style="color: #e10012; font-size: 2.2rem; margin: 0 0 10px 0;">当たり</h2>
-        <p style="font-size: 1.1rem; color: #333; margin: 0 auto 15px auto; font-weight: bold;">この画面をスタッフまでお見せ下さい。</p>
+        <p style="font-size: 1.1rem; color: #333; margin: 0 auto 10px auto; font-weight: bold;">この画面をスタッフまでお見せ下さい。</p>
         <p style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">プレゼント内容：</p>
+        
         <div id="gift-text" class="gift-box"></div>
+
+        <span class="limited-text">先着順！限定プレゼント！</span>
+
         <button class="btn-finish" onclick="finishApp()">アンケートを終了する</button>
     </div>
 </div>
@@ -249,30 +260,19 @@
     function showFinalResult() {
         const popup = document.getElementById('result-popup');
         const gift = document.getElementById('gift-text');
-        const charIcon = document.getElementById('char-icon'); // 画像要素
+        const charIcon = document.getElementById('char-icon');
         const sndWin = document.getElementById('snd-win');
 
         let resultHTML = "";
         const q1 = answers.q1 === 'yes';
         const q2 = answers.q2 === 'yes';
 
-        // 条件分岐と画像の切り替え
         if (q1) {
-            // dポイント対象（Q1がはい）
             charIcon.src = "poinko.png";
-            if (q2) {
-                resultHTML = "dポイント100pt &<br>ファイターズグッズ";
-            } else {
-                resultHTML = "dポイント100pt";
-            }
+            resultHTML = q2 ? "dポイント100pt &<br>ファイターズグッズ" : "dポイント100pt";
         } else {
-            // 湖池屋対象（Q1がいいえ）
             charIcon.src = "character.png";
-            if (q2) {
-                resultHTML = "湖池屋お菓子ハッピーセット &<br>ファイターズグッズ";
-            } else {
-                resultHTML = "湖池屋お菓子ハッピーセット";
-            }
+            resultHTML = q2 ? "湖池屋お菓子ハッピーセット &<br>ファイターズグッズ" : "湖池屋お菓子ハッピーセット";
         }
 
         gift.innerHTML = resultHTML;
